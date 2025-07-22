@@ -2,7 +2,7 @@ name: tk_hero_chess
 description: "王者荣耀小游戏“三分英雄棋”的“无尽挑战”模式的简单文字版。"
 publish_to: "none"
 # 手动使用时间戳作为 build-number
-version: 0.1.0+20250721
+version: 0.1.0+20250722
 
 environment:
   sdk: ^3.8.1

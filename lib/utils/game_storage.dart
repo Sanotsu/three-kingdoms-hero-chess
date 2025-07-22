@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:tk_hero_chess/constants/game_constants.dart';
 import 'package:tk_hero_chess/models/game_record_model.dart';
 import 'package:tk_hero_chess/utils/toast_utils.dart';
 
@@ -10,6 +11,9 @@ class GameStorage {
 
   // 出棋时是否跳过动画
   static const String skipPlayAnimationKey = 'skip_play_animation';
+
+  // 难度存储key
+  static const String difficultyKey = 'game_difficulty';
 
   // 保存游戏记录
   static Future<bool> saveGameRecord(GameRecordModel record) async {
@@ -88,6 +92,27 @@ class GameStorage {
     } catch (e) {
       ToastUtils.showError('获取是否跳过动画失败: $e');
       return false;
+    }
+  }
+
+  // 保存难度
+  static Future<void> setGameDifficulty(GameDifficulty difficulty) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(difficultyKey, difficulty.name);
+  }
+
+  // 获取难度，默认困难
+  static Future<GameDifficulty> getGameDifficulty() async {
+    final prefs = await SharedPreferences.getInstance();
+    final str = prefs.getString(difficultyKey);
+    switch (str) {
+      case 'easy':
+        return GameDifficulty.easy;
+      case 'medium':
+        return GameDifficulty.medium;
+      case 'hard':
+      default:
+        return GameDifficulty.hard;
     }
   }
 }

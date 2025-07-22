@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:tk_hero_chess/constants/game_constants.dart';
 import 'package:tk_hero_chess/models/bond_model.dart';
 import 'package:tk_hero_chess/models/hero_model.dart';
@@ -80,7 +81,7 @@ class GameProvider extends ChangeNotifier {
 
   /// 非直接变量的getter
   // 当前轮次关卡的目标得分
-  int get targetScore => GameConstants.getRoundTargetScore(_currentRound);
+  int get targetScore => GameConstants.getRoundTargetScoreAuto(_currentRound);
   // 当前轮次是否已经换过棋
   bool get hasSwapped => _swappedCount > 0;
 
@@ -191,7 +192,7 @@ class GameProvider extends ChangeNotifier {
       // 检查是否已达到最大选择数量
       if (_selectedHeroes.length >= GameConstants.maxSelectedHeroCount) {
         ToastUtils.showInfo(
-          '最多只能选择${GameConstants.maxSelectedHeroCount}个棋子哦~',
+          '一次性最多选择${GameConstants.maxSelectedHeroCount}个棋子哦',
           align: (ScreenHelper.isWeb() || ScreenHelper.isDesktop())
               ? Alignment.center
               : Alignment.topCenter,
@@ -270,14 +271,8 @@ class GameProvider extends ChangeNotifier {
     // 添加新棋子
     _boardHeroes.addAll(newHeroes);
 
-    // 按阵营排序
-    _boardHeroes.sort((a, b) {
-      if (a.camp == b.camp) return 0;
-      if (a.camp == GameConstants.campWei) return -1;
-      if (b.camp == GameConstants.campWei) return 1;
-      if (a.camp == GameConstants.campShu) return -1;
-      return 1;
-    });
+    // 统一排序
+    GameUtils.sortHeroes(_boardHeroes);
 
     // 清空选中的棋子
     _selectedHeroes = [];
@@ -339,14 +334,8 @@ class GameProvider extends ChangeNotifier {
     // 添加新棋子
     _boardHeroes.addAll(newHeroes);
 
-    // 按阵营排序
-    _boardHeroes.sort((a, b) {
-      if (a.camp == b.camp) return 0;
-      if (a.camp == GameConstants.campWei) return -1;
-      if (b.camp == GameConstants.campWei) return 1;
-      if (a.camp == GameConstants.campShu) return -1;
-      return 1;
-    });
+    // 统一排序
+    GameUtils.sortHeroes(_boardHeroes);
 
     // 清空选中的棋子
     _selectedHeroes = [];
@@ -368,7 +357,7 @@ class GameProvider extends ChangeNotifier {
   // 检查轮次是否完成
   void _checkRoundCompletion() {
     // 检查是否达到目标分数
-    if (_totalScore >= GameConstants.getRoundTargetScore(_currentRound)) {
+    if (_totalScore >= GameConstants.getRoundTargetScoreAuto(_currentRound)) {
       // 准备进入下一轮 - 移除延迟，直接更新状态
       // 清空棋盘和锦囊选项，以便主路由器显示轮次特性页面
       _boardHeroes = [];
@@ -401,9 +390,18 @@ class GameProvider extends ChangeNotifier {
 
   // 生成锦囊选项
   void generateJinNangOptions() {
+    // 汇总所有已选过的锦囊（永久+本轮）
+    List<JinNangModel> allPickedJinNang = [];
+    allPickedJinNang.addAll(_permanentJinNangs);
+
+    // 理论上这里一定是null的，因为生成锦囊在本轮开始之前，每轮结束时有置为null
+    if (_currentRoundJinNang != null) {
+      allPickedJinNang.add(_currentRoundJinNang!);
+    }
+
     _jinNangOptions = GameUtils.generateRandomJinNangOptions(
       3,
-      _permanentJinNangs,
+      allPickedJinNang,
       _currentRound,
     );
 

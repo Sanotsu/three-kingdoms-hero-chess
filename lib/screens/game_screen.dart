@@ -4,8 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-
 import 'package:tk_hero_chess/constants/game_constants.dart';
+
 import 'package:tk_hero_chess/models/bond_model.dart';
 import 'package:tk_hero_chess/models/hero_model.dart';
 import 'package:tk_hero_chess/models/jin_nang_model.dart';
@@ -14,6 +14,7 @@ import 'package:tk_hero_chess/screens/game_over_screen.dart';
 import 'package:tk_hero_chess/screens/round_trait_screen.dart';
 import 'package:tk_hero_chess/utils/audio_manager.dart';
 import 'package:tk_hero_chess/utils/game_storage.dart';
+import 'package:tk_hero_chess/utils/game_utils.dart';
 import 'package:tk_hero_chess/utils/screen_helper.dart';
 import 'package:tk_hero_chess/widgets/bond_info.dart';
 import 'package:tk_hero_chess/widgets/bonds_list.dart';
@@ -77,6 +78,9 @@ class _GameScreenState extends State<GameScreen>
   // 显示当前时间
   late Timer _timeTimer;
   String _currentTime = '';
+
+  // 当前游戏难度
+  GameDifficulty _difficulty = GameDifficulty.hard;
 
   @override
   void initState() {
@@ -143,6 +147,9 @@ class _GameScreenState extends State<GameScreen>
     // 初始化时间
     _updateTime();
     _timeTimer = Timer.periodic(Duration(seconds: 1), (_) => _updateTime());
+
+    // 初始化难度
+    _initDifficulty();
   }
 
   @override
@@ -181,6 +188,15 @@ class _GameScreenState extends State<GameScreen>
     });
   }
 
+  // 获取当前游戏难度
+  Future<void> _initDifficulty() async {
+    final diff = await GameStorage.getGameDifficulty();
+    setState(() {
+      _difficulty = diff;
+    });
+    await GameConstants.loadDifficulty();
+  }
+
   // 播放出棋动画
   void _playHeroesAnimation(GameProvider gameProvider) async {
     // 获取是否跳过动画
@@ -197,14 +213,8 @@ class _GameScreenState extends State<GameScreen>
     _originalIndices.clear();
     _originalPositions.clear();
 
-    // 先把选中的棋子按阵营排序，避免出棋时出现交叉
-    gameProvider.selectedHeroes.sort((a, b) {
-      if (a.camp == b.camp) return 0;
-      if (a.camp == GameConstants.campWei) return -1;
-      if (b.camp == GameConstants.campWei) return 1;
-      if (a.camp == GameConstants.campShu) return -1;
-      return 1;
-    });
+    // 统一排序
+    GameUtils.sortHeroes(gameProvider.selectedHeroes);
 
     // 查找所有选中棋子的实际位置
     for (var hero in gameProvider.selectedHeroes) {
@@ -545,6 +555,7 @@ class _GameScreenState extends State<GameScreen>
       ),
       child: Row(
         children: [
+          // 返回按钮
           Container(
             width: 80.sp,
             margin: EdgeInsets.only(right: 20.sp),
@@ -586,12 +597,24 @@ class _GameScreenState extends State<GameScreen>
             ),
           ),
 
+          // 当前的难度信息
+          Container(
+            margin: EdgeInsets.only(right: 20.sp),
+            child: Text(
+              '${difficultyNames[_difficulty]}模式',
+              style: TextStyle(
+                color: Colors.amber,
+                fontSize: ScreenHelper.setSp(20),
+              ),
+            ),
+          ),
+
           // 轮次和分数
           Expanded(
             child: Row(
               children: [
                 Text(
-                  '第${gameProvider.currentRound}轮',
+                  '第 ${gameProvider.currentRound} 轮',
                   style: TextStyle(
                     color: Colors.amber,
                     fontSize: ScreenHelper.setSp(20),
@@ -600,7 +623,7 @@ class _GameScreenState extends State<GameScreen>
                 ),
                 SizedBox(width: 20.sp),
                 Text(
-                  '目标: ${gameProvider.targetScore}',
+                  '累积目标: ${gameProvider.targetScore}',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: ScreenHelper.setSp(18),
@@ -608,7 +631,7 @@ class _GameScreenState extends State<GameScreen>
                 ),
                 SizedBox(width: 20.sp),
                 Text(
-                  '总分: ${gameProvider.totalScore}',
+                  '累积分数: ${gameProvider.totalScore}',
                   style: TextStyle(
                     color: Colors.green,
                     fontSize: ScreenHelper.setSp(18),
@@ -736,7 +759,7 @@ class _GameScreenState extends State<GameScreen>
                     RotatedBox(
                       quarterTurns: 0,
                       child: Text(
-                        '棋\n列\n组\n合',
+                        '棋\n组\n列\n表',
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: ScreenHelper.setSp(16),

@@ -1,11 +1,11 @@
 import 'dart:math';
-import 'package:flutter/foundation.dart';
 
 import 'package:tk_hero_chess/constants/game_constants.dart';
 import 'package:tk_hero_chess/models/bond_model.dart';
 import 'package:tk_hero_chess/models/hero_model.dart';
 import 'package:tk_hero_chess/models/jin_nang_model.dart';
 import 'package:tk_hero_chess/models/round_trait_model.dart';
+import 'package:tk_hero_chess/utils/toast_utils.dart';
 
 /// 游戏工具类
 class GameUtils {
@@ -18,12 +18,15 @@ class GameUtils {
     List<HeroModel> existingHeroes = const [],
   }) {
     List<HeroModel> heroes = [];
+
+    // 记录每个阵营出现的次数
     Map<String, int> campCounts = {
       GameConstants.campWei: 0,
       GameConstants.campShu: 0,
       GameConstants.campWu: 0,
     };
-    Map<String, int> heroCounts = {}; // 记录每个英雄出现的次数
+    // 记录每个英雄出现的次数
+    Map<String, int> heroCounts = {};
 
     // 统计已有棋子的阵营和英雄数量
     for (var hero in existingHeroes) {
@@ -93,14 +96,8 @@ class GameUtils {
       heroes.add(HeroModel(name: heroName, camp: camp, baseScore: baseScore));
     }
 
-    // 按阵营排序：魏、蜀、吴
-    heroes.sort((a, b) {
-      if (a.camp == b.camp) return 0;
-      if (a.camp == GameConstants.campWei) return -1;
-      if (b.camp == GameConstants.campWei) return 1;
-      if (a.camp == GameConstants.campShu) return -1;
-      return 1;
-    });
+    // 按阵营+人物名排序
+    GameUtils.sortHeroes(heroes);
 
     return heroes;
   }
@@ -140,19 +137,17 @@ class GameUtils {
   // 生成随机锦囊选项
   static List<JinNangModel> generateRandomJinNangOptions(
     int count,
-    List<JinNangModel> existingJinNangs,
+    List<JinNangModel> allPickedJinNangs,
     int round,
   ) {
     // 获取所有可用的锦囊名称
     List<String> availableJinNangNames = GameConstants.jinNangDefinitions.keys
         .toList();
 
-    // 如果轮次小于等于5，则排除已经选择的锦囊
-    if (round <= 5) {
-      availableJinNangNames.removeWhere(
-        (name) => existingJinNangs.any((jinNang) => jinNang.name == name),
-      );
-    }
+    // 始终排除所有已选过的锦囊
+    availableJinNangNames.removeWhere(
+      (name) => allPickedJinNangs.any((jinNang) => jinNang.name == name),
+    );
 
     // 如果可用锦囊数量不足，则返回所有可用锦囊
     if (availableJinNangNames.length <= count) {
@@ -518,9 +513,7 @@ class GameUtils {
     // 如果没有激活的羁绊，但是有棋子
     // 这个应该不存在，因为随便选择了一个棋子，至少会触发同阵营X1羁绊
     if (bondResults.isEmpty) {
-      if (kDebugMode) {
-        print('没有激活的羁绊，但是有棋子============');
-      }
+      ToastUtils.showError('没有激活的羁绊，但是有棋子，这不应该出现');
 
       // 计算基础得分
       int baseScore = 0;
@@ -625,5 +618,21 @@ class GameUtils {
     }
 
     return bestResult;
+  }
+
+  // 英雄棋排序：先按阵营（魏、蜀、吴），再按人物名
+  static void sortHeroes(List<HeroModel> heroes) {
+    int campOrder(String camp) {
+      if (camp == GameConstants.campWei) return 0;
+      if (camp == GameConstants.campShu) return 1;
+      if (camp == GameConstants.campWu) return 2;
+      return 99;
+    }
+
+    heroes.sort((a, b) {
+      int cmp = campOrder(a.camp).compareTo(campOrder(b.camp));
+      if (cmp != 0) return cmp;
+      return a.name.compareTo(b.name);
+    });
   }
 }

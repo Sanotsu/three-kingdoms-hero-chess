@@ -10,6 +10,8 @@ import 'package:tk_hero_chess/utils/audio_manager.dart';
 import 'package:tk_hero_chess/utils/screen_helper.dart';
 import 'package:tk_hero_chess/widgets/game_button.dart';
 import 'package:tk_hero_chess/screens/main_router.dart';
+import 'package:tk_hero_chess/constants/game_constants.dart';
+import 'package:tk_hero_chess/utils/game_storage.dart';
 
 /// 欢迎界面
 class WelcomeScreen extends StatefulWidget {
@@ -22,6 +24,8 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   bool _bgmEnabled = true;
   bool _sfxEnabled = true;
+
+  GameDifficulty _difficulty = GameDifficulty.hard;
 
   PackageInfo _packageInfo = PackageInfo(
     appName: 'Unknown',
@@ -36,6 +40,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     super.initState();
     _initAudio();
     _initPackageInfo();
+    _initDifficulty();
   }
 
   Future<void> _initAudio() async {
@@ -65,6 +70,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     setState(() {
       _packageInfo = info;
     });
+  }
+
+  Future<void> _initDifficulty() async {
+    final diff = await GameStorage.getGameDifficulty();
+    setState(() {
+      _difficulty = diff;
+    });
+    await GameConstants.loadDifficulty();
   }
 
   @override
@@ -168,7 +181,51 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ],
                 ),
               ],
-              SizedBox(height: 48.sp),
+
+              // 难度选择
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 20.sp),
+                padding: EdgeInsets.symmetric(horizontal: 10.sp),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10.sp),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...GameDifficulty.values.map(
+                      (d) => Row(
+                        children: [
+                          Radio<GameDifficulty>(
+                            value: d,
+                            groupValue: _difficulty,
+                            onChanged: (v) async {
+                              if (v != null) {
+                                await GameStorage.setGameDifficulty(v);
+                                await GameConstants.loadDifficulty();
+                                setState(() {
+                                  _difficulty = v;
+                                });
+                              }
+                            },
+                            activeColor: Colors.amber,
+                          ),
+                          Text(
+                            difficultyNames[d]!,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: ScreenHelper.setSp(16),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 30.sp),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

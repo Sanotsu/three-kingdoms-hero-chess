@@ -7,6 +7,7 @@ import 'package:tk_hero_chess/utils/audio_manager.dart';
 import 'package:tk_hero_chess/utils/game_storage.dart';
 import 'package:tk_hero_chess/utils/screen_helper.dart';
 import 'package:tk_hero_chess/widgets/game_button.dart';
+import 'package:tk_hero_chess/constants/game_constants.dart';
 
 /// 游戏记录界面
 class RecordsScreen extends StatefulWidget {
@@ -175,6 +176,18 @@ class _RecordsScreenState extends State<RecordsScreen> {
               Expanded(
                 flex: 2,
                 child: Text(
+                  '难度',
+                  style: TextStyle(
+                    color: Colors.amber,
+                    fontSize: ScreenHelper.setSp(16),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
                   '总分',
                   style: TextStyle(
                     color: Colors.amber,
@@ -236,6 +249,17 @@ class _RecordsScreenState extends State<RecordsScreen> {
                       flex: 2,
                       child: Text(
                         '${record.completedRounds}轮',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: ScreenHelper.setSp(16),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        difficultyNames[record.difficulty]!,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: ScreenHelper.setSp(16),

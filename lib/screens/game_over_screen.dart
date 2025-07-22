@@ -32,11 +32,15 @@ class _GameOverScreenState extends State<GameOverScreen> {
   Future<void> _saveGameRecord() async {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
 
+    // 获取当前难度
+    final difficulty = await GameStorage.getGameDifficulty();
+
     // 创建游戏记录
     final record = GameRecordModel(
       completedRounds: gameProvider.currentRound - 1, // 当前轮未完成
       totalScore: gameProvider.totalScore,
       playTime: DateTime.now(),
+      difficulty: difficulty,
     );
 
     // 保存记录

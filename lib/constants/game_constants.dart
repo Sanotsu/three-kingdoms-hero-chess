@@ -1,7 +1,16 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 
+import 'package:tk_hero_chess/utils/game_storage.dart';
+
 /// 游戏常量定义
+enum GameDifficulty { easy, medium, hard }
+
+const Map<GameDifficulty, String> difficultyNames = {
+  GameDifficulty.easy: '简单',
+  GameDifficulty.medium: '中等',
+  GameDifficulty.hard: '困难',
+};
+
 class GameConstants {
   // 阵营定义
   static const String campWei = '魏';
@@ -78,7 +87,7 @@ class GameConstants {
     '以逸待劳': {
       'type': '增益',
       'effect': '未触发羁绊的棋子也计算基础得分，且得分倍率增加',
-      'levels': [100, 200, 300], // 倍率百分比
+      'levels': [75, 150, 300], // 倍率百分比
     },
     '三分天下': {
       'type': '基础得分',
@@ -98,7 +107,7 @@ class GameConstants {
     '故技重施': {
       'type': '基础得分',
       'effect': '本次出棋数量与上一次相同时，基础得分增加',
-      'levels': [75, 100, 200], // 分数
+      'levels': [75, 100, 125], // 分数
     },
     '声东击西': {
       'type': '倍率',
@@ -113,7 +122,7 @@ class GameConstants {
     '深根固本': {
       'type': '倍率',
       'effect': '本次出棋时，每个剩余换棋次数使得分倍率增加',
-      'levels': [40, 75, 100], // 倍率百分比
+      'levels': [50, 75, 100], // 倍率百分比
     },
     '抛砖引玉': {
       'type': '倍率',
@@ -127,26 +136,43 @@ class GameConstants {
     },
   };
 
-  // 关卡目标分数设定
-  static int getRoundTargetScoreDemo(int round) {
-    // 简单的关卡目标分数设定，可以根据需要调整
-    if (round == 1) return 1000;
-    if (round == 2) return 2200;
-    if (round == 3) return 5000;
-    if (round == 4) return 10000;
-    if (round == 5) return 20000;
-
-    // 第6轮及以后的目标分数增长更快
-    return 20000 + (round - 5) * 15000;
+  // 简单的关卡目标分数设定（平方公式，前面机关比中等难，后面比中等简单）
+  static int getRoundTargetScoreEasy(int round) {
+    return 800 * round * round - 1250 * round + 1050;
   }
 
-  static int getRoundTargetScore(int round) {
+  // 中等难度关卡目标分数设定（系数更小的原版立方公式）
+  static int getRoundTargetScoreMedium(int round) {
+    return 35 * round * round * round + 350 * round * round - 300 * round + 900;
+  }
+
+  // 这是原版的得分设定，比较难
+  static int getRoundTargetScoreHard(int round) {
     // 根据实测，得分公式为: 50*(n^3) + 400*(n^2) - 350*n + 900
     // 提取公因式: 50*(n^3 + 8n^2 - 7n + 18)
-    // return (50 * pow(round, 3) + 400 * pow(round, 2) - 350 * round + 900)
-    //     .round();
+    // return (50 * (pow(round, 3) + 8 * pow(round, 2) - 7 * round + 18)).round();
 
-    return (50 * (pow(round, 3) + 8 * pow(round, 2) - 7 * round + 18)).round();
+    return 50 * round * round * round + 400 * round * round - 350 * round + 900;
+  }
+
+  // 难度缓存
+  static GameDifficulty _cachedDifficulty = GameDifficulty.hard;
+
+  // 初始化或切换难度时调用
+  static Future<void> loadDifficulty() async {
+    _cachedDifficulty = await GameStorage.getGameDifficulty();
+  }
+
+  // 根据当前难度自动获取目标分数
+  static int getRoundTargetScoreAuto(int round) {
+    switch (_cachedDifficulty) {
+      case GameDifficulty.easy:
+        return getRoundTargetScoreEasy(round);
+      case GameDifficulty.medium:
+        return getRoundTargetScoreMedium(round);
+      case GameDifficulty.hard:
+        return getRoundTargetScoreHard(round);
+    }
   }
 
   // 默认英雄棋基础得分
