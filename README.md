@@ -46,30 +46,48 @@ flutter run
     - 一级的“深根固本”，估计为`50%`
     - 三级的“故技重施”，估计为`125`
     - 三级的“短兵相接”，估计为`300%`
-- 新加的难度选择，困难是和原版一样的计算方式，但是想要得分比原版更困难，所以加了简单和中等难度
+- 新加的难度选择，困难是和原版一样的计算方式，但是想要得高分比原版更困难，所以加了简单和中等难度
 - **代码中有完成播放 BGM 和少量操作音效的功能**，但是没有去找合适的音频所以没有启用。
   - 如有需要，可以自行替换`assets/audio`同名音频，并取消 [welcome_screen.dart](lib/screens/welcome_screen.dart) 的注释即可。
 - 有简单测试使用`站酷庆科黄油体`字体作为游戏字体进行测试
   - 有尝试简单使用其他字体，但是“惇”字很多都不兼容
   - 如果不喜欢可以自行在[main.dart)](lib/main.dart)注释掉，使用默认字体
 
+## 开发环境和依赖
+
+在一个 Windows 7 中使用 Visual Box 7 安装的 Ubuntu22.04 LTS 虚拟机中进行开发。
+
+```sh
+# 开发机环境：
+$ lsb_release -c -a && uname -r -m
+No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 22.04.3 LTS
+Release:        22.04
+Codename:       jammy
+5.15.0-119-generic x86_64
+
+# 2025-07-21 使用的 flutter 版本：
+$ flutter --version
+Flutter 3.32.4 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision 6fba2447e9 (6 周前) • 2025-06-12 19:03:56 -0700
+Engine • revision 8cd19e509d (6 周前) • 2025-06-12 16:30:12 -0700
+Tools • Dart 3.8.1 • DevTools 2.45.1
+```
+
+flame_audio 在构建 linux 应用需要`libgstreamer1.0`开发库，所以需要在 Linux 下安装:
+
+```sh
+sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+```
+
 ## 三种模式得分计算
 
 - 新加的两种模式(可以无限畅玩下去，难度在于游玩时间，因为游戏没有暂停恢复)：
-
-\[
-\text{简单模式得分} = 800n^2 - 1250n + 1050
-\]
-
-\[
-\text{中等模式得分} = 35n^3 + 350n^2 - 300n + 900
-\]
-
+  - 简单模式得分 = 800n^2 - 1250n + 1050
+  - 中等模式得分 = 35n^3 + 350n^2 - 300n + 900
 - 原版的计算方式（全服最高 160 多万，而这个文字版还没有原版那么灵活，想得高分更困难）：
-
-\[
-\text{困难模式得分} = 50n^3 + 400n^2 - 350n + 900
-\]
+  - 困难模式得分 = 50n^3 + 400n^2 - 350n + 900
 
 <details>
 
@@ -129,3 +147,7 @@ flutter run
 | 50  | 1938550 | 5235900 | 7233400 |
 
 </details>
+
+## 声明
+
+此项目是个人为了兴趣而开发, 仅用于学习和测试，请勿他用，谢谢。
